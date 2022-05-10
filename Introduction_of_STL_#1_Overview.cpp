@@ -19,7 +19,7 @@ class Test
     {
     	this->i = rhs.i;
         this->s = rhs.s;
-        cout << "Test Copy Constructor" << this->s << endl;
+        cout << this << ": Test Copy Constructor" << this->s << endl;
     }
     
     Test(Test &&rhs)
@@ -28,7 +28,7 @@ class Test
         this->s = rhs.s;
         rhs.i = -1;
         rhs.s = "";
-        cout << "Test Move Constructor &rhs " << &rhs << " " << this->s << endl;
+        cout << this << ": Test Move Constructor &rhs " << &rhs << " " << this->s << endl;
     }
     
     string operator*()
@@ -44,6 +44,7 @@ class Test
 
 class Base
 {
+	protected:
 	int i_b;
 	string s_b;
 	vector<int> v_b;
@@ -54,6 +55,31 @@ class Base
 	s_b(s),
 	v_b(v)
 	{
+	}
+    
+    Base(const Base &rhs)
+    {
+    	i_b = this->i_b;
+        s_b = this->s_b;
+        
+        cout << this << ": Base Copy Constructor" << endl;
+    }
+    
+    Base(Base &&rhs):
+    	s_b(std::move(rhs.s_b)),
+        v_b(std::move(rhs.v_b))
+    {
+    	i_b = rhs.i_b;
+   
+        cout << this << ": Base Move Constructor" << endl;
+    }
+    
+    void print(string s)
+    {
+    	cout << this << ": ****" << s << "**** " << endl;
+        for(int i = 0; i < v_b.size(); i++) {
+        	cout << this << ": Base " << v_b[i] << endl;
+        }
 	}
 	
 	virtual ~Base()
@@ -73,6 +99,33 @@ class Derived : public Base
 		v_der(v_d)
 	{
 	}
+    
+    Derived(const Derived &rhs):
+    	Base(rhs.i_b, rhs.s_b, rhs.v_b)
+    {
+        s_der = rhs.s_der;
+        v_der = rhs.v_der;
+        
+        cout << this << ": Derived Copy Constructor" << endl;
+    }
+    
+    Derived(Derived &&rhs):
+    	Base(std::move(rhs)),
+        s_der(std::move(rhs.s_der)),
+        v_der(std::move(rhs.v_der))
+    {
+    	cout << this << ": Derived Move Constructor" << endl;
+
+    }
+    
+    void print(string s)
+    {
+        Base::print(s);
+        
+        for(int i = 0; i < v_der.size(); i++) {
+        	cout << this << ": Derived " << v_der[i] << endl;
+        }
+    }
 };
     
 ostream & operator << (ostream &out, const Test &c)
@@ -81,6 +134,7 @@ ostream & operator << (ostream &out, const Test &c)
   out << c.s << endl;
   return out;
 }
+
 
 int main() {
 
@@ -114,6 +168,17 @@ int main() {
     for(vector<Test>::iterator itr1 = testVec2.begin(); itr1 != testVec2.end(); ++itr1) 	{
     	cout << &(*itr1) << endl;
     }
+    
+    string s_b = {"I am base"};
+    vector<int> v_b = {1, 2, 3, 4, 5};
+    vector<int> v_d = {6, 7, 8};
+    
+    string s_d = {"I am derived"};
+    Derived d(1, s_b, v_b, s_d, v_d);
+    d.print("Derived d");
+    Derived d2(std::move(d));
+    d.print("Derived d");
+    d2.print("Derived d2");
     
   	cout << "Hello World!";
   	return 0;
